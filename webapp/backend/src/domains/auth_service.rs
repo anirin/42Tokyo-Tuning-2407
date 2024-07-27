@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use crate::cache::img_cache::{IMAGE_CACHE};
 
 use actix_web::web::Bytes;
 use log::error;
@@ -171,7 +172,14 @@ impl<T: AuthRepository + std::fmt::Debug> AuthService<T> {
 
         let path: PathBuf =
             Path::new(&format!("images/user_profile/{}", profile_image_name)).to_path_buf();
-
+		
+		if width == 500 && height == 500 {
+			let img_bytes = IMAGE_CACHE.get(&profile_image_name);
+			match img_bytes {
+				Some(bytes) => return Ok(Bytes::from(bytes)),
+				None => (),
+			}
+		}
         let resize_arg = format!("{}x{}", width, height);
         let output = Command::new("magick")
             .arg(&path)

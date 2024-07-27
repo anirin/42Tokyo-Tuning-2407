@@ -24,8 +24,9 @@ mod middlewares;
 mod models;
 mod repositories;
 mod utils;
+mod cache;
 
-#[actix_web::main]
+#[tokio::main]
 async fn main() -> std::io::Result<()> {
     let pool = infrastructure::db::create_pool().await;
     let mut port = 8080;
