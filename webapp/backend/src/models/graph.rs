@@ -51,6 +51,29 @@ impl Graph {
             edges: HashMap::new(),
         }
     }
+	pub fn clone(&self) -> Self {
+		Graph {
+			nodes: self.nodes.clone(),
+			edges: self.edges.clone(),
+		}
+	}
+
+	pub fn update_edge_weight(&mut self, node_a_id: i32, node_b_id: i32, weight: i32) {
+		if let Some(edges) = self.edges.get_mut(&node_a_id) {
+			for edge in edges.iter_mut() {
+				if edge.node_b_id == node_b_id {
+					edge.weight = weight;
+				}
+			}
+		}
+		if let Some(edges) = self.edges.get_mut(&node_b_id) {
+			for edge in edges.iter_mut() {
+				if edge.node_b_id == node_a_id {
+					edge.weight = weight;
+				}
+			}
+		}
+	}
 
     pub fn add_node(&mut self, node: Node) {
         self.nodes.insert(node.id, node);
