@@ -90,7 +90,16 @@ impl<
             .get_paginated_tow_trucks(0, -1, Some("available".to_string()), Some(area_id))
             .await?;
 
-		let graph = GRAPH_CACHE.get_graph(area_id as usize);
+		let nodes = self.map_repository.get_all_nodes(Some(area_id)).await?;
+		let edges = self.map_repository.get_all_edges(Some(area_id)).await?;
+
+		let mut graph = Graph::new();
+		for node in nodes {
+			graph.add_node(node);
+		}
+		for edge in edges {
+			graph.add_edge(edge);
+		}
 
         let sorted_tow_trucks_by_distance = {
             let mut tow_trucks_with_distance: Vec<_> = tow_trucks

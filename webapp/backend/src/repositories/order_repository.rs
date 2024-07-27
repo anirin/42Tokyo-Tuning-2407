@@ -199,37 +199,23 @@ impl OrderRepository for OrderRepositoryImpl {
 	) -> Result<(), AppError> {
 		let mut tx: Transaction<'_, MySql> = self.pool.begin().await?;
 
-		// 1. Update order
-		sqlx::query(
-			"UPDATE orders SET dispatcher_id = ?, tow_truck_id = ?, status = 'dispatched' WHERE id = ?"
-		)
-		.bind(dispatcher_id)
-		.bind(tow_truck_id)
-		.bind(order_id)
-		.execute(&mut tx)
-		.await?;
-	
-		// 2. Create completed order
-		if let Err(e) = sqlx::query(
-			"INSERT INTO completed_orders (order_id, tow_truck_id, completed_time) VALUES (?, ?, ?)"
-		)
-		.bind(order_id)
-		.bind(tow_truck_id)
-		.bind(completed_time)
-		.execute(&mut tx)
-		.await
+		let query = "
+            CALL process_order_procedure(?, ?, ?, ?, ?)
+        ";
+
+        if let Err(e) = sqlx::query(query)
+            .bind(order_id)
+            .bind(dispatcher_id)
+            .bind(tow_truck_id)
+            .bind(completed_time)
+            .bind(new_tow_truck_status)
+            .execute(&mut tx)
+            .await
 		{
 			eprintln!("error: {:?}", e);
 			return Err(AppError::BadRequest);
 		}
-	
-		// 3. Update tow truck status
-		sqlx::query("UPDATE tow_trucks SET status = ? WHERE id = ?")
-			.bind(new_tow_truck_status)
-			.bind(tow_truck_id)
-			.execute(&mut tx)
-			.await?;
-	
+
 		// Commit the transaction
 		tx.commit().await?;
 	
