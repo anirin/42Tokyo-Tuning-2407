@@ -4,6 +4,8 @@ use crate::models::order::{CompletedOrder, Order};
 use crate::domains::dto::order::OrderDto;
 use chrono::{DateTime, Utc};
 use sqlx::mysql::MySqlPool;
+use sqlx::MySql;
+use sqlx::Transaction;
 
 #[derive(Debug)]
 pub struct OrderRepositoryImpl {
@@ -187,6 +189,40 @@ impl OrderRepository for OrderRepositoryImpl {
         Ok(())
     }
 
+	async fn process_order(
+		&self,
+		order_id: i32,
+		dispatcher_id: i32,
+		tow_truck_id: i32,
+		completed_time: DateTime<Utc>,
+		new_tow_truck_status: &str,
+	) -> Result<(), AppError> {
+		let mut tx: Transaction<'_, MySql> = self.pool.begin().await?;
+
+		let query = "
+            CALL process_order_procedure(?, ?, ?, ?, ?)
+        ";
+
+        if let Err(e) = sqlx::query(query)
+            .bind(order_id)
+            .bind(dispatcher_id)
+            .bind(tow_truck_id)
+            .bind(completed_time)
+            .bind(new_tow_truck_status)
+            .execute(&mut tx)
+            .await
+		{
+			eprintln!("error: {:?}", e);
+			return Err(AppError::BadRequest);
+		}
+
+		// Commit the transaction
+		tx.commit().await?;
+	
+		Ok(())
+	}
+
+
     async fn get_all_completed_orders(&self) -> Result<Vec<CompletedOrder>, AppError> {
         let orders = sqlx::query_as::<_, CompletedOrder>(
             "SELECT co.id, co.order_id, co.tow_truck_id, co.order_time, co.completed_time, o.car_value
@@ -200,7 +236,6 @@ impl OrderRepository for OrderRepositoryImpl {
     }
 
 	async fn get_order_dto_by_id(&self, id: i32) -> Result<OrderDto, AppError> {
-		eprintln!("get_order_dto_by_id");
 		let order = sqlx::query_as::<_, OrderDto>(
 			"SELECT
 				o.id,
@@ -238,7 +273,6 @@ impl OrderRepository for OrderRepositoryImpl {
 				Err(AppError::InternalServerError)
 			},
 			Ok(order) => {
-				eprintln!("aaa");
 				Ok(order)
 			}
 		}
