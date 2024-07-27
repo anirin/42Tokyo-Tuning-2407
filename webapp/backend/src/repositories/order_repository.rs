@@ -1,6 +1,7 @@
 use crate::domains::order_service::OrderRepository;
 use crate::errors::AppError;
 use crate::models::order::{CompletedOrder, Order};
+use crate::domains::dto::order::OrderDto;
 use chrono::{DateTime, Utc};
 use sqlx::mysql::MySqlPool;
 
@@ -197,4 +198,50 @@ impl OrderRepository for OrderRepositoryImpl {
 
         Ok(orders)
     }
+
+	async fn get_order_dto_by_id(&self, id: i32) -> Result<OrderDto, AppError> {
+		eprintln!("get_order_dto_by_id");
+		let order = sqlx::query_as::<_, OrderDto>(
+			"SELECT
+				o.id,
+				o.client_id,
+				c.username AS client_username,
+				o.dispatcher_id,
+				d.user_id AS dispatcher_user_id,
+				du.username AS dispatcher_username,
+				o.tow_truck_id,
+				t.driver_id AS driver_user_id,
+				tu.username AS driver_username,
+				n.area_id,
+				o.status,
+				o.node_id,
+				o.car_value,
+				o.order_time,
+				o.completed_time
+			FROM orders o
+			LEFT JOIN users c ON o.client_id = c.id
+			LEFT JOIN dispatchers d ON o.dispatcher_id = d.id
+			LEFT JOIN users du ON d.user_id = du.id
+			LEFT JOIN tow_trucks t ON o.tow_truck_id = t.id
+			LEFT JOIN users tu ON t.driver_id = tu.id
+			LEFT JOIN nodes n ON o.node_id = n.id
+			WHERE o.id = ?
+			",
+		)
+		.bind(id)
+		.fetch_one(&self.pool)
+		.await;
+
+		match order {
+			Err(e) => {
+				eprintln!("error: {:?}", e);
+				Err(AppError::InternalServerError)
+			},
+			Ok(order) => {
+				eprintln!("aaa");
+				Ok(order)
+			}
+		}
+	}
 }
+

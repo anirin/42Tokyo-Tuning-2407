@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
 use crate::models::order::CompletedOrder;
 
@@ -28,7 +29,7 @@ pub struct UpdateOrderStatusRequestDto {
 
 // Output Data Structure
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, FromRow)]
 pub struct OrderDto {
     pub id: i32,
     pub client_id: i32,
