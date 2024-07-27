@@ -4,6 +4,8 @@ use crate::models::order::{CompletedOrder, Order};
 use crate::domains::dto::order::OrderDto;
 use chrono::{DateTime, Utc};
 use sqlx::mysql::MySqlPool;
+use sqlx::MySql;
+use sqlx::Transaction;
 
 #[derive(Debug)]
 pub struct OrderRepositoryImpl {
@@ -187,6 +189,54 @@ impl OrderRepository for OrderRepositoryImpl {
         Ok(())
     }
 
+	async fn process_order(
+		&self,
+		order_id: i32,
+		dispatcher_id: i32,
+		tow_truck_id: i32,
+		completed_time: DateTime<Utc>,
+		new_tow_truck_status: &str,
+	) -> Result<(), AppError> {
+		let mut tx: Transaction<'_, MySql> = self.pool.begin().await?;
+
+		// 1. Update order
+		sqlx::query(
+			"UPDATE orders SET dispatcher_id = ?, tow_truck_id = ?, status = 'dispatched' WHERE id = ?"
+		)
+		.bind(dispatcher_id)
+		.bind(tow_truck_id)
+		.bind(order_id)
+		.execute(&mut tx)
+		.await?;
+	
+		// 2. Create completed order
+		if let Err(e) = sqlx::query(
+			"INSERT INTO completed_orders (order_id, tow_truck_id, completed_time) VALUES (?, ?, ?)"
+		)
+		.bind(order_id)
+		.bind(tow_truck_id)
+		.bind(completed_time)
+		.execute(&mut tx)
+		.await
+		{
+			eprintln!("error: {:?}", e);
+			return Err(AppError::BadRequest);
+		}
+	
+		// 3. Update tow truck status
+		sqlx::query("UPDATE tow_trucks SET status = ? WHERE id = ?")
+			.bind(new_tow_truck_status)
+			.bind(tow_truck_id)
+			.execute(&mut tx)
+			.await?;
+	
+		// Commit the transaction
+		tx.commit().await?;
+	
+		Ok(())
+	}
+
+
     async fn get_all_completed_orders(&self) -> Result<Vec<CompletedOrder>, AppError> {
         let orders = sqlx::query_as::<_, CompletedOrder>(
             "SELECT co.id, co.order_id, co.tow_truck_id, co.order_time, co.completed_time, o.car_value
@@ -200,7 +250,6 @@ impl OrderRepository for OrderRepositoryImpl {
     }
 
 	async fn get_order_dto_by_id(&self, id: i32) -> Result<OrderDto, AppError> {
-		eprintln!("get_order_dto_by_id");
 		let order = sqlx::query_as::<_, OrderDto>(
 			"SELECT
 				o.id,
@@ -238,7 +287,6 @@ impl OrderRepository for OrderRepositoryImpl {
 				Err(AppError::InternalServerError)
 			},
 			Ok(order) => {
-				eprintln!("aaa");
 				Ok(order)
 			}
 		}

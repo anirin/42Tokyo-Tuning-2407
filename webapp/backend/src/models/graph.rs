@@ -16,7 +16,7 @@ pub struct Edge {
     pub weight: i32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Graph {
     pub nodes: HashMap<i32, Node>,
     pub edges: HashMap<i32, Vec<Edge>>,
@@ -51,12 +51,6 @@ impl Graph {
             edges: HashMap::new(),
         }
     }
-	pub fn clone(&self) -> Self {
-		Graph {
-			nodes: self.nodes.clone(),
-			edges: self.edges.clone(),
-		}
-	}
 
 	pub fn update_edge_weight(&mut self, node_a_id: i32, node_b_id: i32, weight: i32) {
 		if let Some(edges) = self.edges.get_mut(&node_a_id) {

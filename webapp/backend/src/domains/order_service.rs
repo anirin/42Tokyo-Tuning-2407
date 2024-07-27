@@ -29,6 +29,14 @@ pub trait OrderRepository {
         node_id: i32,
         car_value: f64,
     ) -> Result<(), AppError>;
+	async fn process_order(
+		&self,
+		order_id: i32,
+		dispatcher_id: i32,
+		tow_truck_id: i32,
+		completed_time: DateTime<Utc>,
+		new_tow_truck_status: &str,
+    ) -> Result<(), AppError>;
     async fn update_order_dispatched(
         &self,
         id: i32,
@@ -214,21 +222,14 @@ impl<
         tow_truck_id: i32,
         order_time: DateTime<Utc>,
     ) -> Result<(), AppError> {
-        if (self
-            .order_repository
-            .create_completed_order(order_id, tow_truck_id, order_time)
-            .await)
-            .is_err()
-        {
-            return Err(AppError::BadRequest);
-        }
-
         self.order_repository
-            .update_order_dispatched(order_id, dispatcher_id, tow_truck_id)
-            .await?;
-
-        self.tow_truck_repository
-            .update_status(tow_truck_id, "busy")
+            .process_order(
+				order_id,
+				dispatcher_id,
+				tow_truck_id,
+				order_time,
+				"busy",
+			)
             .await?;
 
         Ok(())
