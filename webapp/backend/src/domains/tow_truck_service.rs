@@ -97,9 +97,9 @@ impl<
             graph.edges = EDGE_CACHE.get_edges(area_id as usize);
         }
         else {
-		let nodes = self.map_repository.get_all_edges(Some(area_id)).await.unwrap();
-		for node in nodes {
-			graph.add_edge(node);
+		let edges = self.map_repository.get_all_edges(Some(area_id)).await.unwrap();
+		for edge in edges {
+			graph.add_edge(edge);
 		}}
 
 		let truck = graph.find_nearest_tow_truck(tow_trucks, order.node_id);
