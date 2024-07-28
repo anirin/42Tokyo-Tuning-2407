@@ -100,34 +100,41 @@ impl<
 		for edge in edges {
 			graph.add_edge(edge);
 		}
+		let truck = graph.find_nearest_tow_truck(tow_trucks, order.node_id);
+		let result: Option<TowTruckDto> = match truck {
+			Some(truck) => Some(TowTruckDto::from_entity(truck)),
+			None => None,
+		};
 
-        let sorted_tow_trucks_by_distance = {
-            let mut tow_trucks_with_distance: Vec<_> = tow_trucks
-                .into_iter()
-                .map(|truck| {
-                    let distance = calculate_distance(&graph, truck.node_id, order.node_id);
-                    (distance, truck)
-                })
-                .collect();
+		Ok(result)
 
-            tow_trucks_with_distance.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-            tow_trucks_with_distance
-        };
+        // let sorted_tow_trucks_by_distance = {
+            // let mut tow_trucks_with_distance: Vec<_> = tow_trucks
+            //     .into_iter()
+            //     .map(|truck| {
+            //         let distance = calculate_distance(&graph, truck.node_id, order.node_id);
+            //         (distance, truck)
+            //     })
+            //     .collect();
 
-        if sorted_tow_trucks_by_distance.is_empty() || sorted_tow_trucks_by_distance[0].0 > 10000000
-        {
-            return Ok(None);
-        }
+            // tow_trucks_with_distance.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+            // tow_trucks_with_distance
+        // };
 
-        let sorted_tow_truck_dtos: Vec<TowTruckDto> = sorted_tow_trucks_by_distance
-            .into_iter()
-            .map(|(_, truck)| TowTruckDto::from_entity(truck))
-            .collect();
+        // if sorted_tow_trucks_by_distance.is_empty() || sorted_tow_trucks_by_distance[0].0 > 10000000
+        // {
+        //     return Ok(None);
+        // }
 
-        Ok(sorted_tow_truck_dtos.first().cloned())
+        // let sorted_tow_truck_dtos: Vec<TowTruckDto> = sorted_tow_trucks_by_distance
+        //     .into_iter()
+        //     .map(|(_, truck)| TowTruckDto::from_entity(truck))
+        //     .collect();
+
+        // Ok(sorted_tow_truck_dtos.first().cloned())
     }
 }
 
-fn calculate_distance(graph: &Graph, node_id_1: i32, node_id_2: i32) -> i32 {
-    graph.shortest_path(node_id_1, node_id_2)
-}
+// fn calculate_distance(graph: &Graph, node_id_1: i32, node_id_2: i32) -> i32 {
+//     graph.shortest_path(node_id_1, node_id_2)
+// }
