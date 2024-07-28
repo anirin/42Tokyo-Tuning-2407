@@ -16,6 +16,9 @@ CREATE INDEX idx_order_client_id ON orders(client_id);
 CREATE INDEX idx_order_dispatcher_id ON orders(dispatcher_id);
 CREATE INDEX idx_order_tow_truck_id ON orders(tow_truck_id);
 
+CREATE INDEX idx_node_a_id ON edges(node_a_id);
+CREATE INDEX idx_node_b_id ON edges(node_b_id);
+
 -- process_order_procedure プロシージャを作成
 DELIMITER //
 CREATE PROCEDURE process_order_procedure(
@@ -38,4 +41,3 @@ BEGIN
     WHERE id = p_tow_truck_id;
 END //
 DELIMITER ;
-
