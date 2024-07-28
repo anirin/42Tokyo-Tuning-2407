@@ -39,3 +39,5 @@ BEGIN
 END //
 DELIMITER ;
 
+CREATE INDEX idx_area_id ON nodes(area_id);
+CREATE INDEX idx_area_id_id ON nodes(area_id, id);
