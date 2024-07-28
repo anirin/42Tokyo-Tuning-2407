@@ -94,7 +94,7 @@ impl<
 		let mut graph = Graph::new();
 		graph.nodes = NODE_CACHE.get_nodes(area_id as usize);
         if area_id <= 3 {
-            graph.nodes = EDGE_CACHE.get_edges(area_id as usize);
+            graph.edges = EDGE_CACHE.get_edges(area_id as usize);
         }
         else {
 		let nodes = self.map_repository.get_all_edges(Some(area_id)).await.unwrap();
