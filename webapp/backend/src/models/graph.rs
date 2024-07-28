@@ -1,6 +1,7 @@
 use sqlx::FromRow;
 use std::collections::{HashMap, BinaryHeap};
 use std::cmp::Ordering;
+use crate::models::tow_truck::TowTruck;
 
 #[derive(FromRow, Clone, Debug)]
 pub struct Node {
@@ -90,44 +91,83 @@ impl Graph {
             .push(reverse_edge);
     }
 
-    pub fn shortest_path(&self, from_node_id: i32, to_node_id: i32) -> i32 {
-        let mut distances = HashMap::new();
-        let mut heap = BinaryHeap::new();
+	pub fn find_nearest_tow_truck(&self, tow_trucks: Vec<TowTruck>, from_node_id: i32) -> Option<TowTruck> {
+		let mut distances = HashMap::new();
+		let mut heap = BinaryHeap::new();
+	
+		// Initialize distances
+		for node_id in self.nodes.keys() {
+			distances.insert(*node_id, i32::MAX);
+		}
+		distances.insert(from_node_id, 0);
+	
+		// Push the start node into the heap
+		heap.push(State { cost: 0, position: from_node_id });
+	
+		while let Some(State { cost, position }) = heap.pop() {
+			// if a track is found, return it
+			if let Some(tow_truck) = tow_trucks.iter().find(|t| t.node_id == position) {
+				return Some(tow_truck.clone());
+			}
+	
+			// If the cost is greater than the recorded distance, skip it
+			if cost > *distances.get(&position).unwrap_or(&i32::MAX) {
+				continue;
+			}
+	
+			// Update distances to neighboring nodes
+			if let Some(edges) = self.edges.get(&position) {
+				for edge in edges {
+					let next = State { cost: cost + edge.weight, position: edge.node_b_id };
+	
+					if next.cost < *distances.get(&next.position).unwrap_or(&i32::MAX) {
+						distances.insert(next.position, next.cost);
+						heap.push(next);
+					}
+				}
+			}
+		}
+		return None;
+	}
 
-        // Initialize distances
-        for node_id in self.nodes.keys() {
-            distances.insert(*node_id, i32::MAX);
-        }
-        distances.insert(from_node_id, 0);
+    // pub fn shortest_path(&self, from_node_id: i32, to_node_id: i32) -> i32 {
+    //     let mut distances = HashMap::new();
+    //     let mut heap = BinaryHeap::new();
 
-        // Push the start node into the heap
-        heap.push(State { cost: 0, position: from_node_id });
+    //     // Initialize distances
+    //     for node_id in self.nodes.keys() {
+    //         distances.insert(*node_id, i32::MAX);
+    //     }
+    //     distances.insert(from_node_id, 0);
 
-        while let Some(State { cost, position }) = heap.pop() {
-            // If we reached the destination node, return the cost
-            if position == to_node_id {
-                return cost;
-            }
+    //     // Push the start node into the heap
+    //     heap.push(State { cost: 0, position: from_node_id });
 
-            // If the cost is greater than the recorded distance, skip it
-            if cost > *distances.get(&position).unwrap_or(&i32::MAX) {
-                continue;
-            }
+    //     while let Some(State { cost, position }) = heap.pop() {
+    //         // If we reached the destination node, return the cost
+    //         if position == to_node_id {
+    //             return cost;
+    //         }
 
-            // Update distances to neighboring nodes
-            if let Some(edges) = self.edges.get(&position) {
-                for edge in edges {
-                    let next = State { cost: cost + edge.weight, position: edge.node_b_id };
+    //         // If the cost is greater than the recorded distance, skip it
+    //         if cost > *distances.get(&position).unwrap_or(&i32::MAX) {
+    //             continue;
+    //         }
 
-                    if next.cost < *distances.get(&next.position).unwrap_or(&i32::MAX) {
-                        distances.insert(next.position, next.cost);
-                        heap.push(next);
-                    }
-                }
-            }
-        }
+    //         // Update distances to neighboring nodes
+    //         if let Some(edges) = self.edges.get(&position) {
+    //             for edge in edges {
+    //                 let next = State { cost: cost + edge.weight, position: edge.node_b_id };
 
-        // If the destination node is unreachable, return i32::MAX
-        *distances.get(&to_node_id).unwrap_or(&i32::MAX)
-    }
+    //                 if next.cost < *distances.get(&next.position).unwrap_or(&i32::MAX) {
+    //                     distances.insert(next.position, next.cost);
+    //                     heap.push(next);
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     // If the destination node is unreachable, return i32::MAX
+    //     *distances.get(&to_node_id).unwrap_or(&i32::MAX)
+    // }
 }
