@@ -4,7 +4,8 @@ use super::order_service::OrderRepository;
 use crate::errors::AppError;
 use crate::models::graph::Graph;
 use crate::models::tow_truck::TowTruck;
-use crate::cache::graph_cache::GRAPH_CACHE;
+use crate::cache::node_cache::NODE_CACHE;
+use crate::cache::edge_cache::EDGE_CACHE;
 
 pub trait TowTruckRepository {
     async fn get_paginated_tow_trucks(
@@ -90,7 +91,9 @@ impl<
             .get_paginated_tow_trucks(0, -1, Some("available".to_string()), Some(area_id))
             .await?;
 
-		let graph = GRAPH_CACHE.get_graph(area_id as usize);
+		let mut graph = Graph::new();
+		graph.nodes = NODE_CACHE.get_nodes(area_id as usize);
+		graph.edges = EDGE_CACHE.get_edges(area_id as usize);
 
 		let truck = graph.find_nearest_tow_truck(tow_trucks, order.node_id);
 		let result: Option<TowTruckDto> = match truck {

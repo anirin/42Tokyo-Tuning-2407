@@ -1,7 +1,7 @@
 use crate::{
     errors::AppError,
     models::graph::{Edge, Node},
-	cache::graph_cache::GRAPH_CACHE,
+	cache::edge_cache::EDGE_CACHE,
 };
 
 pub trait MapRepository {
@@ -33,7 +33,7 @@ impl<T: MapRepository + std::fmt::Debug> MapService<T> {
         weight: i32,
     ) -> Result<(), AppError> {
 		let area_id = self.repository.get_area_id_by_node_id(node_a_id).await?;
-		GRAPH_CACHE.update_edge_weight(area_id as usize, node_a_id, node_b_id, weight);
+		EDGE_CACHE.update_edge_weight(area_id as usize, node_a_id, node_b_id, weight);
         self.repository
             .update_edge(node_a_id, node_b_id, weight)
             .await?;
