@@ -93,7 +93,10 @@ impl<
 
 		let mut graph = Graph::new();
 		graph.nodes = NODE_CACHE.get_nodes(area_id as usize);
-		graph.edges = EDGE_CACHE.get_edges(area_id as usize);
+		let nodes = self.map_repository.get_all_edges(Some(area_id)).await.unwrap();
+		for node in nodes {
+			graph.add_edge(node);
+		}
 
 		let truck = graph.find_nearest_tow_truck(tow_trucks, order.node_id);
 		let result: Option<TowTruckDto> = match truck {
