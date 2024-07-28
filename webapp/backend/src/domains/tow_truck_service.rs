@@ -99,7 +99,21 @@ impl<
         else {
 		let edges = self.map_repository.get_all_edges(Some(area_id)).await.unwrap();
 		for edge in edges {
-			graph.add_edge(edge);
+            for edge in edges {
+                graph.edges
+                    .entry(edge.node_a_id)
+                    .or_default()
+                    .push(edge.clone());
+                let reverse_edge = Edge {
+                    node_a_id: edge.node_b_id,
+                    node_b_id: edge.node_a_id,
+                    weight: edge.weight,
+                };
+                graph.edges
+                    .entry(reverse_edge.node_a_id)
+                    .or_default()
+                    .push(reverse_edge);
+            }
 		}}
 
 		let truck = graph.find_nearest_tow_truck(tow_trucks, order.node_id);
