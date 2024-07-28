@@ -3,14 +3,14 @@ use std::collections::{HashMap, BinaryHeap};
 use std::cmp::Ordering;
 use crate::models::tow_truck::TowTruck;
 
-#[derive(FromRow, Clone, Debug)]
+#[derive(FromRow, Clone, Debug, Default)]
 pub struct Node {
     pub id: i32,
     pub x: i32,
     pub y: i32,
 }
 
-#[derive(FromRow, Clone, Debug)]
+#[derive(FromRow, Clone, Debug, Default)]
 pub struct Edge {
     pub node_a_id: i32,
     pub node_b_id: i32,
