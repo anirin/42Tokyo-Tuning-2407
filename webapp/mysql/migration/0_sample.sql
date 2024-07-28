@@ -41,3 +41,6 @@ DELIMITER ;
 
 CREATE INDEX idx_area_id ON nodes(area_id);
 CREATE INDEX idx_area_id_id ON nodes(area_id, id);
+
+CREATE INDEX idx_node_a_id ON edges(node_a_id);
+CREATE INDEX idx_node_b_id ON edges(node_b_id);
