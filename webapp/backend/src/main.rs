@@ -35,7 +35,7 @@ async fn main() -> std::io::Result<()> {
     if cfg!(debug_assertions) {
         port = 18080;
     }
-	// graph_cache::cache_graph(MapRepositoryImpl::new(pool.clone())).await;
+	graph_cache::cache_graph(MapRepositoryImpl::new(pool.clone())).await;
 
     let auth_service = web::Data::new(AuthService::new(AuthRepositoryImpl::new(pool.clone())));
     let auth_service_for_middleware =
